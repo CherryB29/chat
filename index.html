@@ -3,46 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이메일 & 구글 채팅방</title>
+    <title>슈퍼 채팅방 v5</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        #auth-area { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: white; position: fixed; width: 100%; z-index: 100; gap: 15px; }
-        .auth-box { display: flex; flex-direction: column; gap: 10px; width: 300px; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
-        input { padding: 12px; border: 1px solid #ddd; border-radius: 5px; outline: none; }
-        button { padding: 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
-        .google-btn { background: #4285F4; color: white; }
-        .email-btn { background: #34a853; color: white; }
+        :root { --main-blue: #0084ff; --msg-gray: #f1f0f0; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         
-        /* 채팅창 스타일 */
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .message { background: white; padding: 10px; border-radius: 10px; max-width: 70%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .my-message { align-self: flex-end; background: #0084ff; color: white; }
-        .msg-name { font-size: 10px; opacity: 0.8; margin-bottom: 3px; }
+        /* 상단 상태바 */
+        header { background: white; padding: 12px; text-align: center; border-bottom: 1px solid #ddd; font-weight: bold; font-size: 14px; position: sticky; top: 0; z-index: 10; }
+        #user-count { color: var(--main-blue); }
+
+        /* 인증 레이어 */
+        #auth-area { position: fixed; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
+        .auth-box { display: flex; flex-direction: column; gap: 10px; width: 300px; padding: 20px; border: 1px solid #ddd; border-radius: 15px; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+        button { padding: 12px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.3s; }
+
+        /* 채팅 영역 */
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .msg-unit { display: flex; flex-direction: column; max-width: 80%; }
+        .is-me { align-self: flex-end; align-items: flex-end; }
+        .is-other { align-self: flex-start; align-items: flex-start; }
+
+        .user-info { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 12px; color: #555; }
+        .avatar { width: 28px; height: 28px; border-radius: 50%; background: #eee; border: 1px solid #ddd; }
+        
+        .bubble { padding: 10px 15px; border-radius: 18px; font-size: 15px; position: relative; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .is-me .bubble { background: var(--main-blue); color: white; border-bottom-right-radius: 2px; }
+        .is-other .bubble { background: white; color: black; border-bottom-left-radius: 2px; }
+
+        .meta-info { display: flex; gap: 10px; align-items: center; margin-top: 5px; font-size: 11px; color: #888; }
+        .like-btn { cursor: pointer; color: #ff4757; border: 1px solid #ffdada; padding: 2px 8px; border-radius: 10px; background: white; display: flex; align-items: center; gap: 4px; }
+        .like-btn:hover { background: #fff5f5; }
+
+        /* 입력바 */
         #input-area { background: white; padding: 15px; display: none; gap: 10px; border-top: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
+    <header>📡 <span id="user-count">0</span>명이 함께 대화 중입니다</header>
+
     <div id="auth-area">
-        <h2>채팅 로그인</h2>
+        <h2 style="margin-bottom: 5px;">반갑습니다! 👋</h2>
+        <p style="font-size: 14px; color: #666; margin-bottom: 15px;">닉네임을 정하고 로그인을 진행하세요.</p>
         <div class="auth-box">
-            <input type="email" id="email" placeholder="이메일">
-            <input type="password" id="password" placeholder="비밀번호">
-            <button class="email-btn" onclick="emailLogin()">이메일 로그인 / 가입</button>
+            <input type="text" id="nickname" placeholder="사용할 닉네임">
+            <input type="email" id="email" placeholder="이메일 주소">
+            <input type="password" id="password" placeholder="비밀번호 (6자 이상)">
+            <button style="background: #34a853; color: white;" onclick="emailLogin()">이메일로 시작하기</button>
         </div>
-        <p>또는</p>
-        <button class="google-btn" id="google-login" style="width: 300px;">Google로 시작하기</button>
+        <button style="background: #4285F4; color: white; width: 300px;" id="google-login">Google 계정으로 시작하기</button>
     </div>
 
     <div id="chat-window"></div>
+    
     <div id="input-area">
-        <input type="text" id="msg-input" placeholder="메시지 입력..." style="flex:1; border-radius: 20px;">
-        <button id="send-btn" style="background: #0084ff; color: white; border-radius: 20px;">전송</button>
+        <input type="text" id="msg-input" placeholder="메시지를 입력하세요..." style="flex:1; border-radius: 25px; padding-left: 20px;">
+        <button id="send-btn" style="background: var(--main-blue); color: white; border-radius: 50%; width: 45px; height: 45px; padding: 0;">✈</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, onValue, set, onDisconnect, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -61,55 +84,105 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        let currentUser = null;
+        let myProfile = { name: "", photo: "" };
 
-        // 1. 구글 로그인
+        // --- 1. 인증 로직 ---
         document.getElementById('google-login').onclick = () => signInWithPopup(auth, provider);
-
-        // 2. 이메일 로그인/가입 (가입 기록 없으면 가입, 있으면 로그인)
+        
         window.emailLogin = async () => {
             const email = document.getElementById('email').value;
             const pw = document.getElementById('password').value;
+            if(pw.length < 6) return alert("비밀번호는 6자 이상이어야 합니다.");
+            
             try {
                 await signInWithEmailAndPassword(auth, email, pw);
             } catch (err) {
-                if (err.code === 'auth/user-not-found') {
+                if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') {
                     await createUserWithEmailAndPassword(auth, email, pw);
-                } else { alert("로그인 실패: " + err.message); }
+                } else { alert("오류: " + err.message); }
             }
         };
 
-        // 인증 상태 확인
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                currentUser = user;
+                const nickInput = document.getElementById('nickname').value;
+                myProfile.name = nickInput || user.displayName || user.email.split('@')[0];
+                myProfile.photo = user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`;
+                
                 document.getElementById('auth-area').style.display = 'none';
                 document.getElementById('input-area').style.display = 'flex';
+
+                // 접속 중 표시
+                const statusRef = ref(db, `status/${user.uid}`);
+                set(statusRef, { name: myProfile.name });
+                onDisconnect(statusRef).remove();
             }
         });
 
-        // 메시지 전송
-        document.getElementById('send-btn').onclick = () => {
-            const text = document.getElementById('msg-input').value;
+        // 접속자 수 체크
+        onValue(ref(db, 'status'), (snap) => {
+            document.getElementById('user-count').innerText = snap.size || 0;
+        });
+
+        // --- 2. 채팅 로직 ---
+        const sendMsg = () => {
+            const text = document.getElementById('msg-input').value.trim();
             if (!text) return;
-            push(ref(db, 'chat_v3'), {
-                text: text,
-                userName: currentUser.displayName || currentUser.email.split('@')[0],
-                userId: currentUser.uid
+            
+            const now = new Date();
+            const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            push(ref(db, 'chat_final'), {
+                text, time,
+                sender: myProfile.name,
+                photo: myProfile.photo,
+                uid: auth.currentUser.uid,
+                likes: 0
             });
             document.getElementById('msg-input').value = "";
         };
 
-        // 메시지 표시
-        onChildAdded(ref(db, 'chat_v3'), (snapshot) => {
+        document.getElementById('send-btn').onclick = sendMsg;
+        document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') sendMsg(); };
+
+        // 메시지 표시 및 좋아요 실시간 감시
+        onChildAdded(ref(db, 'chat_final'), (snapshot) => {
             const data = snapshot.val();
+            const key = snapshot.key;
+            const isMe = data.uid === auth.currentUser?.uid;
+
             const msgDiv = document.createElement('div');
-            msgDiv.classList.add('message');
-            if (data.userId === currentUser?.uid) msgDiv.classList.add('my-message');
-            msgDiv.innerHTML = `<div class="msg-name">${data.userName}</div><div>${data.text}</div>`;
+            msgDiv.className = `msg-unit ${isMe ? 'is-me' : 'is-other'}`;
+            msgDiv.id = `unit-${key}`;
+            
+            msgDiv.innerHTML = `
+                <div class="user-info">
+                    ${!isMe ? `<img src="${data.photo}" class="avatar">` : ''}
+                    <span>${data.sender}</span>
+                </div>
+                <div class="bubble">${data.text}</div>
+                <div class="meta-info">
+                    <span>${data.time}</span>
+                    <button class="like-btn" onclick="addLike('${key}')">❤️ <span id="likes-${key}">${data.likes || 0}</span></button>
+                </div>
+            `;
             document.getElementById('chat-window').appendChild(msgDiv);
             document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+
+            // 좋아요 실시간 연동
+            onValue(ref(db, `chat_final/${key}/likes`), (s) => {
+                const countEl = document.getElementById(`likes-${key}`);
+                if(countEl) countEl.innerText = s.val() || 0;
+            });
         });
+
+        // 좋아요 증가 함수 (트랜잭션 사용으로 안전하게)
+        window.addLike = (key) => {
+            const likeRef = ref(db, `chat_final/${key}/likes`);
+            runTransaction(likeRef, (current) => {
+                return (current || 0) + 1;
+            });
+        };
     </script>
 </body>
 </html>
