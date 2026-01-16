@@ -3,71 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Super Chat v18.7 - Stable</title>
+    <title>Super Chat v19.0 - Final</title>
     <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
     <style>
-        :root { --main-blue: #0084ff; --main-green: #34a853; --bg-gray: #f0f2f5; --me-bubble: #0084ff; }
+        :root { --main-blue: #0084ff; --bg-gray: #f0f2f5; --me-bubble: #0084ff; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: -apple-system, sans-serif; background: #d1d8e0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
         .app-container { width: 100%; max-width: 500px; background: var(--bg-gray); display: flex; flex-direction: column; height: 100%; position: relative; }
         header { background: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; z-index: 10; }
         #notice-bar { background: #fff9db; padding: 8px 15px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ffe066; }
-        .notice-btn { background: #f0ad4e; color: white; border: none; padding: 3px 8px; border-radius: 5px; font-size: 11px; cursor: pointer; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 4px; }
-        .msg-unit { display: flex; flex-direction: column; max-width: 85%; margin-bottom: 2px; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+        
+        /* 메시지 디자인 */
+        .msg-unit { display: flex; flex-direction: column; max-width: 85%; }
         .is-me { align-self: flex-end; align-items: flex-end; }
         .is-other { align-self: flex-start; align-items: flex-start; }
-        .bubble { padding: 10px 14px; border-radius: 18px; font-size: 15px; box-shadow: 0 1px 1px rgba(0,0,0,0.05); word-break: break-all; line-height: 1.4; }
+        .bubble { padding: 10px 14px; border-radius: 18px; font-size: 15px; word-break: break-all; box-shadow: 0 1px 2px rgba(0,0,0,0.1); line-height: 1.4; }
         .is-me .bubble { background: var(--me-bubble); color: white; border-bottom-right-radius: 2px; }
         .is-other .bubble { background: white; color: black; border-bottom-left-radius: 2px; }
-        .draw-msg { max-width: 100%; border-radius: 12px; border: 1px solid #ddd; margin-top: 5px; cursor: pointer; background: white; }
-        .yt-thumb { width: 100%; border-radius: 10px; margin-top: 8px; cursor: pointer; border: 1px solid #eee; }
-        .poll-box { background: white; border-radius: 15px; padding: 15px; width: 250px; border: 1px solid #eee; margin-top: 5px; }
-        .poll-opt { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 6px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; }
+        
+        /* 특수 메시지 */
+        .yt-thumb { width: 100%; max-width: 240px; border-radius: 10px; margin-top: 8px; cursor: pointer; border: 1px solid #eee; display: block; }
+        .draw-img { max-width: 200px; border-radius: 10px; border: 1px solid #ddd; background: white; margin-top: 5px; cursor: pointer; }
+        .poll-box { background: white; border-radius: 15px; padding: 15px; width: 220px; border: 1px solid #eee; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .poll-opt { background: #f0f2f5; padding: 10px; border-radius: 8px; margin-top: 5px; cursor: pointer; display: flex; justify-content: space-between; font-size: 14px; }
+
+        /* 입력창 */
         .input-container { background: white; padding: 10px; border-top: 1px solid #ddd; }
-        #input-area { display: flex; gap: 8px; align-items: center; background: #f8f9fa; padding: 5px 10px; border-radius: 25px; }
-        #msg-input { flex: 1; border: none; background: transparent; padding: 10px 5px; outline: none; font-size: 16px; }
-        #send-btn { background: var(--main-blue); border: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; flex-shrink: 0; }
+        #input-area { display: flex; gap: 8px; align-items: center; background: #f8f9fa; padding: 5px 12px; border-radius: 25px; }
+        #msg-input { flex: 1; border: none; background: transparent; padding: 10px 0; outline: none; font-size: 16px; color: black; }
+        
+        /* 모달 공통 */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; }
-        #emoji-picker-container { width: 100%; height: 320px; border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
+        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; max-height: 85vh; overflow-y: auto; }
         #draw-canvas { background: white; border: 1px solid #ddd; border-radius: 10px; touch-action: none; width: 100%; }
-        .user-tag { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: bold; color: #666; margin-top: 8px; }
-        .time-tag { font-size: 10px; color: #999; margin: 2px 5px; }
-        .auth-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .login-btn { background: var(--main-blue); color: white; margin-bottom: 8px; }
-        .signup-btn { background: var(--main-green); color: white; margin-bottom: 15px; }
-        .google-btn { background: white; border: 1px solid #ddd; color: #555; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #emoji-picker-container { width: 100%; height: 300px; overflow: hidden; border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
         <header>
-            <div style="font-size:13px; font-weight:bold;">💬 Super Chat <span id="user-count" style="color:green;">0</span></div>
+            <div style="font-size:13px; font-weight:bold;">💬 Super Chat <span id="user-count">0</span></div>
             <div style="display:flex; gap:10px; align-items:center;">
-                <div onclick="openProfileEdit()" style="cursor:pointer; background:#f0f2f5; padding:5px 12px; border-radius:15px; font-size:13px;">
+                <div onclick="window.openProfileEdit()" style="cursor:pointer; background:#f0f2f5; padding:5px 12px; border-radius:15px; font-size:13px;">
                     <span id="header-emoji">👤</span> <span id="header-name">설정</span>
                 </div>
-                <button onclick="handleLogout()" style="border:none; background:none; color:#ff4d4d; font-size:12px; cursor:pointer;">로그아웃</button>
+                <button onclick="window.handleLogout()" style="border:none; background:none; color:#ff4d4d; font-size:12px; cursor:pointer;">로그아웃</button>
             </div>
         </header>
 
         <div id="notice-bar">
-            <div id="notice-text" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📢 공지사항을 확인하세요.</div>
-            <button onclick="openNoticeModal()" class="notice-btn">수정</button>
+            <div id="notice-text" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📢 공지사항을 등록해 주세요.</div>
+            <button onclick="window.openNoticeModal()" style="font-size:11px; padding:2px 5px; cursor:pointer;">수정</button>
         </div>
 
         <div id="chat-window"></div>
 
         <div class="input-container" id="chat-input-box" style="display:none;">
             <div id="input-area">
-                <button onclick="openDrawModal()" style="background:none; border:none; font-size:20px; cursor:pointer;">🎨</button>
-                <button onclick="openPollModal()" style="background:none; border:none; font-size:20px; cursor:pointer;">📊</button>
-                <input type="text" id="msg-input" placeholder="메시지 입력..." autocomplete="off">
-                <button id="send-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                </button>
+                <button onclick="window.openDrawModal()" style="background:none; border:none; font-size:20px; cursor:pointer;">🎨</button>
+                <button onclick="window.openPollModal()" style="background:none; border:none; font-size:20px; cursor:pointer;">📊</button>
+                <input type="text" id="msg-input" placeholder="메시지 입력..." spellcheck="false" autocomplete="off">
+                <button id="send-btn" style="background:var(--main-blue); border:none; width:36px; height:36px; border-radius:50%; color:white; font-weight:bold; cursor:pointer;">↑</button>
             </div>
         </div>
     </div>
@@ -77,21 +75,20 @@
             <h2 style="margin-bottom:20px; color:var(--main-blue);">Super Chat</h2>
             <input type="email" id="email" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;" placeholder="이메일">
             <input type="password" id="password" style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ddd; border-radius:8px;" placeholder="비밀번호">
-            <button onclick="handleEmailLogin()" class="auth-btn login-btn">로그인</button>
-            <button onclick="handleEmailSignUp()" class="auth-btn signup-btn">이메일로 가입하기</button>
-            <button id="google-login" class="auth-btn google-btn">Google 로그인</button>
+            <button onclick="window.handleEmailLogin()" style="width:100%; padding:12px; background:var(--main-blue); color:white; border:none; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">로그인</button>
+            <button onclick="window.handleEmailSignUp()" style="width:100%; padding:12px; background:#34a853; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">이메일 회원가입</button>
         </div>
     </div>
 
-    <div id="notice-modal" class="modal"><div class="modal-content"><h4>📢 공지 수정</h4><textarea id="notice-input" style="width:100%; height:80px; padding:10px; border:1px solid #ddd;"></textarea><button onclick="saveNotice()" style="padding:12px; background:var(--main-blue); color:white; border:none; border-radius:10px; font-weight:bold;">반영하기</button><button onclick="closeModal('notice-modal')" style="background:#eee; border:none; padding:10px; border-radius:10px;">닫기</button></div></div>
-    <div id="profile-modal" class="modal"><div class="modal-content"><h4>👤 프로필 설정</h4><div id="emoji-picker-container"></div><input type="text" id="setup-name" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px;" placeholder="닉네임"><button onclick="saveProfile()" style="padding:12px; background:var(--main-blue); color:white; border:none; border-radius:10px; font-weight:bold;">저장</button><button onclick="closeModal('profile-modal')" style="background:#eee; border:none; padding:10px; border-radius:10px;">닫기</button></div></div>
-    <div id="draw-modal" class="modal"><div class="modal-content"><h4>🎨 그림판</h4><canvas id="draw-canvas" width="400" height="400"></canvas><div style="display:flex; justify-content:space-between;"><input type="color" id="draw-color" value="#000000"><button onclick="clearCanvas()">지우기</button></div><button onclick="sendDrawing()" style="background:var(--main-blue); color:white; padding:12px; border:none; border-radius:10px;">전송</button><button onclick="closeModal('draw-modal')">취소</button></div></div>
-    <div id="poll-modal" class="modal"><div class="modal-content"><h4>📊 투표 만들기</h4><input type="text" id="poll-q" placeholder="질문" style="padding:10px; border:1px solid #ddd; border-radius:10px;"><div id="poll-options-container" style="display:flex; flex-direction:column; gap:5px;"></div><button onclick="addPollOption()">+ 항목 추가</button><button onclick="submitPoll()" style="background:var(--main-blue); color:white; padding:12px; border:none; border-radius:10px;">투표 올리기</button><button onclick="closeModal('poll-modal')">취소</button></div></div>
+    <div id="draw-modal" class="modal"><div class="modal-content"><h4>🎨 그림판</h4><canvas id="draw-canvas" width="400" height="400"></canvas><div style="display:flex; justify-content:space-between;"><input type="color" id="draw-color" value="#000000"><button onclick="window.clearCanvas()">지우기</button></div><button onclick="window.sendDrawing()" style="padding:12px; background:var(--main-blue); color:white; border:none; border-radius:10px; cursor:pointer;">그림 전송</button><button onclick="window.closeModal('draw-modal')" style="cursor:pointer;">취소</button></div></div>
+    <div id="profile-modal" class="modal"><div class="modal-content"><h4>👤 프로필 설정</h4><div id="emoji-picker-container"></div><input type="text" id="setup-name" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px;" placeholder="닉네임"><button onclick="window.saveProfile()" style="padding:12px; background:var(--main-blue); color:white; border:none; border-radius:10px; cursor:pointer;">저장</button><button onclick="window.closeModal('profile-modal')" style="cursor:pointer;">닫기</button></div></div>
+    <div id="poll-modal" class="modal"><div class="modal-content"><h4>📊 투표 만들기</h4><input type="text" id="poll-q" placeholder="질문" style="padding:10px; border:1px solid #ddd; border-radius:10px;"><div id="poll-options-container" style="display:flex; flex-direction:column; gap:5px;"></div><button onclick="window.addPollOption()" style="cursor:pointer;">+ 항목 추가</button><button onclick="window.submitPoll()" style="background:var(--main-blue); color:white; padding:12px; border:none; border-radius:10px; cursor:pointer;">투표 올리기</button><button onclick="window.closeModal('poll-modal')" style="cursor:pointer;">취소</button></div></div>
+    <div id="notice-modal" class="modal"><div class="modal-content"><h4>📢 공지 수정</h4><textarea id="notice-input" style="width:100%; height:80px; padding:10px; border:1px solid #ddd;"></textarea><button onclick="window.saveNotice()" style="padding:12px; background:var(--main-blue); color:white; border:none; border-radius:10px; cursor:pointer;">반영</button><button onclick="window.closeModal('notice-modal')" style="cursor:pointer;">닫기</button></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, onChildRemoved, onValue, set, onDisconnect, update, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, push, onChildAdded, onValue, set, update, remove, runTransaction, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDVZVHumJQptb3P_sQT1yMAuVRhANI6Dj4",
@@ -108,119 +105,103 @@
         const auth = getAuth(app);
         const CHAT_PATH = 'chat_v18_final';
         
-        let myInfo = { uid: null, name: "Guest", emoji: "👤" };
-        let lastMsgInfo = { uid: "", time: "" };
+        let currentUID = null;
+        let myInfo = { name: "Guest", emoji: "👤" };
 
-        const curTime = () => new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        const linkify = (t) => t.replace(/(https?:\/\/[^\s]+)/g, url => `<a href="${url}" target="_blank" style="color:inherit; font-weight:bold;">${url}</a>`);
+        // --- 유틸리티 (링크 및 유튜브) ---
+        const linkify = (t) => t.replace(/(https?:\/\/[^\s]+)/g, url => `<a href="${url}" target="_blank" style="color:inherit; font-weight:bold; text-decoration:underline;">${url}</a>`);
         const getYTID = (url) => { const m = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); return (m && m[2].length === 11) ? m[2] : null; };
 
-        // --- 인증 관리 (uid 유실 방지) ---
+        // --- 전역 함수 ---
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+        window.openDrawModal = () => { document.getElementById('draw-modal').style.display = 'flex'; window.clearCanvas(); };
+        window.openPollModal = () => { document.getElementById('poll-options-container').innerHTML = ''; window.addPollOption(); window.addPollOption(); document.getElementById('poll-modal').style.display = 'flex'; };
+        window.openNoticeModal = () => { onValue(ref(db, 'notice'), s => { document.getElementById('notice-input').value = s.val() || ""; }, {onlyOnce:true}); document.getElementById('notice-modal').style.display='flex'; };
+        window.openProfileEdit = () => { document.getElementById('setup-name').value = myInfo.name; document.getElementById('profile-modal').style.display = 'flex'; };
+
+        // --- 인증 ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                myInfo.uid = user.uid; // 로그인 즉시 uid 고정
+                currentUID = user.uid;
                 document.getElementById('auth-area').style.display = 'none';
                 document.getElementById('chat-input-box').style.display = 'block';
                 onValue(ref(db, `users/${user.uid}`), (s) => {
-                    if (s.exists()) {
-                        const d = s.val();
-                        myInfo.name = d.name; myInfo.emoji = d.emoji;
-                        document.getElementById('header-name').innerText = d.name;
-                        document.getElementById('header-emoji').innerText = d.emoji;
+                    if(s.exists()){
+                        myInfo = s.val();
+                        document.getElementById('header-name').innerText = myInfo.name;
+                        document.getElementById('header-emoji').innerText = myInfo.emoji;
                     } else {
                         const init = { name: user.email.split('@')[0], emoji: "👤", uid: user.uid };
                         set(ref(db, `users/${user.uid}`), init);
                     }
                 });
-                set(ref(db, `status/${user.uid}`), { online: true });
+                set(ref(db, `status/${user.uid}`), true);
                 onDisconnect(ref(db, `status/${user.uid}`)).remove();
             } else {
-                myInfo.uid = null;
+                currentUID = null;
                 document.getElementById('auth-area').style.display = 'flex';
                 document.getElementById('chat-input-box').style.display = 'none';
             }
         });
 
-        // --- 전송 로직 (uid 체크 강화) ---
+        window.handleEmailLogin = () => signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).catch(e => alert("로그인 실패: " + e.message));
+        window.handleEmailSignUp = () => createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).catch(e => alert("가입 실패: " + e.message));
+        window.handleLogout = () => signOut(auth).then(() => location.reload());
+
+        // --- 전송 및 렌더링 ---
         const sendMsg = () => {
-            if(!auth.currentUser) return alert("다시 로그인해주세요.");
-            const el = document.getElementById('msg-input');
-            const txt = el.value.trim();
-            if(!txt) return;
-            push(ref(db, CHAT_PATH), { text: txt, uid: auth.currentUser.uid, time: curTime() });
-            el.value = ""; el.focus();
+            const txt = document.getElementById('msg-input').value.trim();
+            if(!txt || !currentUID) return;
+            push(ref(db, CHAT_PATH), { text: txt, uid: currentUID, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
+            document.getElementById('msg-input').value = "";
         };
         document.getElementById('send-btn').onclick = sendMsg;
         document.getElementById('msg-input').onkeypress = (e) => e.key === 'Enter' && sendMsg();
 
-        window.sendDrawing = () => {
-            if(!auth.currentUser) return alert("로그인이 필요합니다.");
-            const img = canvas.toDataURL('image/png', 0.5);
-            push(ref(db, CHAT_PATH), { type:'draw', image: img, uid: auth.currentUser.uid, time: curTime() });
-            closeModal('draw-modal');
-        };
-
-        window.submitPoll = () => {
-            if(!auth.currentUser) return alert("로그인이 필요합니다.");
-            const q = document.getElementById('poll-q').value;
-            const opts = Array.from(document.querySelectorAll('.p-opt-in')).map(el=>el.value).filter(v=>v.trim());
-            if(q && opts.length > 1) {
-                push(ref(db, CHAT_PATH), { type:'poll', q, opts, votes:opts.map(()=>0), uid: auth.currentUser.uid, time: curTime() });
-                closeModal('poll-modal');
-            }
-        };
-
-        // --- 렌더링 및 기타 기능 ---
         onChildAdded(ref(db, CHAT_PATH), (snap) => {
-            const data = snap.val(); const key = snap.key; const isMe = data.uid === auth.currentUser?.uid;
-            const isCont = (lastMsgInfo.uid === data.uid && lastMsgInfo.time === data.time);
-            lastMsgInfo = { uid: data.uid, time: data.time };
-            const div = document.createElement('div'); div.id = `msg-${key}`; div.className = `msg-unit ${isMe ? 'is-me' : 'is-other'}`;
+            const data = snap.val(); const key = snap.key; const isMe = data.uid === currentUID;
+            const div = document.createElement('div');
+            div.className = `msg-unit ${isMe ? 'is-me' : 'is-other'}`;
+            
             let contentHtml = "";
-            if(data.type === 'draw') contentHtml = `<img src="${data.image}" class="draw-msg" onclick="window.open('${data.image}')">`;
-            else if(data.type === 'poll') contentHtml = `<div class="poll-box"><strong>📊 ${data.q}</strong>` + data.opts.map((o,i) => `<div class="poll-opt" onclick="vote('${key}',${i})">${o} <b id="v-${key}-${i}">${data.votes?data.votes[i]:0}</b></div>`).join('') + `</div>`;
-            else {
+            if(data.type === 'draw') {
+                contentHtml = `<img src="${data.image}" class="draw-img" onclick="window.open('${data.image}')">`;
+            } else if(data.type === 'poll') {
+                contentHtml = `<div class="poll-box"><strong>📊 ${data.q}</strong>` + data.opts.map((o,i) => `<div class="poll-opt" onclick="window.vote('${key}',${i})">${o} <b id="v-${key}-${i}">${data.votes?data.votes[i]:0}</b></div>`).join('') + `</div>`;
+            } else {
                 const yid = getYTID(data.text || "");
                 const yth = yid ? `<img src="https://img.youtube.com/vi/${yid}/mqdefault.jpg" class="yt-thumb" onclick="window.open('https://youtu.be/${yid}')">` : "";
                 contentHtml = `<div class="bubble">${linkify(data.text)}</div>${yth}`;
             }
-            div.innerHTML = `${!isMe && !isCont ? `<div class="user-tag"><span class="u-emoji-${data.uid}">👤</span> <span class="u-name-${data.uid}">...</span></div>` : ''}<div style="display:flex; align-items:flex-end; gap:5px; flex-direction:${isMe?'row-reverse':'row'}">${contentHtml}${!isCont?`<span class="time-tag">${data.time}</span>`:''}</div>${isMe?`<button onclick="deleteMsg('${key}')" style="border:none; background:none; color:red; font-size:9px; cursor:pointer; opacity:0.3;">삭제</button>`:''}`;
+
+            div.innerHTML = `<div style="font-size:10px; color:#888; margin-bottom:2px;">${isMe ? '나' : (data.uid.slice(0,5))}</div><div style="display:flex; align-items:flex-end; gap:5px; flex-direction:${isMe?'row-reverse':'row'}">${contentHtml} <span style="font-size:10px; color:#999;">${data.time}</span></div>`;
             document.getElementById('chat-window').appendChild(div);
             document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
         });
 
-        // --- 나머지 필수 함수들 ---
-        window.handleEmailLogin = () => signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).catch(e => alert("로그인 실패: " + e.message));
-        window.handleEmailSignUp = () => createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).catch(e => alert("가입 실패: " + e.message));
-        document.getElementById('google-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-        window.handleLogout = () => signOut(auth).then(()=>location.reload());
+        // --- 기타 기능 구현 ---
+        window.sendDrawing = () => { push(ref(db, CHAT_PATH), { type:'draw', image: canvas.toDataURL('image/png', 0.5), uid: currentUID, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) }); window.closeModal('draw-modal'); };
+        window.addPollOption = () => { const i = document.createElement('input'); i.className="p-opt-in"; i.placeholder="항목"; i.style.padding="8px"; document.getElementById('poll-options-container').appendChild(i); };
+        window.submitPoll = () => { const q=document.getElementById('poll-q').value; const opts=Array.from(document.querySelectorAll('.p-opt-in')).map(e=>e.value).filter(v=>v.trim()); if(q && opts.length>1) { push(ref(db, CHAT_PATH), { type:'poll', q, opts, votes:opts.map(()=>0), uid:currentUID, time:new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) }); window.closeModal('poll-modal'); }};
         window.vote = (key, i) => runTransaction(ref(db, `${CHAT_PATH}/${key}/votes/${i}`), v => (v||0)+1);
-        window.deleteMsg = (k) => remove(ref(db, `${CHAT_PATH}/${k}`));
-        onChildRemoved(ref(db, CHAT_PATH), s => document.getElementById(`msg-${s.key}`)?.remove());
-        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-        window.openNoticeModal = () => { onValue(ref(db, 'notice'), s => { document.getElementById('notice-input').value = s.val() || ""; }, {onlyOnce:true}); document.getElementById('notice-modal').style.display='flex'; };
-        window.saveNotice = () => { set(ref(db, 'notice'), document.getElementById('notice-input').value); closeModal('notice-modal'); };
-        onValue(ref(db, 'notice'), s => { document.getElementById('notice-text').innerText = s.val() ? "📢 " + s.val() : "📢 공지가 없습니다."; });
+        window.saveNotice = () => { set(ref(db, 'notice'), document.getElementById('notice-input').value); window.closeModal('notice-modal'); };
+        onValue(ref(db, 'notice'), s => document.getElementById('notice-text').innerText = "📢 " + (s.val() || "공지사항이 없습니다."));
+        window.saveProfile = () => { update(ref(db, `users/${currentUID}`), {name: document.getElementById('setup-name').value, emoji: myInfo.emoji}); window.closeModal('profile-modal'); };
+        onValue(ref(db, 'status'), s => document.getElementById('user-count').innerText = s.val() ? Object.keys(s.val()).length : 0);
+        
         const picker = new EmojiMart.Picker({ onEmojiSelect: (e) => { myInfo.emoji = e.native; document.getElementById('header-emoji').innerText = e.native; }, locale: 'ko' });
         document.getElementById('emoji-picker-container').appendChild(picker);
-        window.openProfileEdit = () => { document.getElementById('setup-name').value = myInfo.name; document.getElementById('profile-modal').style.display = 'flex'; };
-        window.saveProfile = () => { update(ref(db, `users/${myInfo.uid}`), {name:document.getElementById('setup-name').value, emoji:myInfo.emoji}); closeModal('profile-modal'); };
-        
-        // 그림판 캔버스 로직
+
         const canvas = document.getElementById('draw-canvas'); const ctx = canvas.getContext('2d'); let drawing = false;
         window.clearCanvas = () => { ctx.fillStyle="white"; ctx.fillRect(0,0,400,400); };
         const getP = (e) => { const r = canvas.getBoundingClientRect(); const x = e.touches ? e.touches[0].clientX : e.clientX; const y = e.touches ? e.touches[0].clientY : e.clientY; return { x: (x-r.left)*(400/r.width), y: (y-r.top)*(400/r.height) }; };
         canvas.addEventListener('mousedown', (e) => { drawing=true; ctx.beginPath(); const p=getP(e); ctx.moveTo(p.x,p.y); });
-        canvas.addEventListener('mousemove', (e) => { if(!drawing) return; const p=getP(e); ctx.strokeStyle=document.getElementById('draw-color').value; ctx.lineWidth=3; ctx.lineCap='round'; ctx.lineTo(p.x,p.y); ctx.stroke(); });
+        canvas.addEventListener('mousemove', (e) => { if(!drawing) return; const p=getP(e); ctx.strokeStyle = document.getElementById('draw-color').value; ctx.lineWidth = 3; ctx.lineTo(p.x, p.y); ctx.stroke(); });
         canvas.addEventListener('mouseup', () => drawing=false);
-        canvas.addEventListener('touchstart', (e) => { drawing=true; ctx.beginPath(); const p=getP(e); ctx.moveTo(p.x,p.y); e.preventDefault(); });
-        canvas.addEventListener('touchmove', (e) => { if(!drawing) return; const p=getP(e); ctx.strokeStyle=document.getElementById('draw-color').value; ctx.lineWidth=3; ctx.lineTo(p.x,p.y); ctx.stroke(); e.preventDefault(); });
+        canvas.addEventListener('touchstart', (e) => { drawing=true; ctx.beginPath(); const p=getP(e); ctx.moveTo(getP(e).x,getP(e).y); e.preventDefault(); });
+        canvas.addEventListener('touchmove', (e) => { if(!drawing) return; const p=getP(e); ctx.lineTo(p.x,p.y); ctx.stroke(); e.preventDefault(); });
         canvas.addEventListener('touchend', () => drawing=false);
 
-        window.openPollModal = () => { document.getElementById('poll-options-container').innerHTML = ''; addPollOption(); addPollOption(); document.getElementById('poll-modal').style.display='flex'; };
-        window.addPollOption = () => { const i = document.createElement('input'); i.className="p-opt-in"; i.placeholder="항목"; i.style.padding="8px"; document.getElementById('poll-options-container').appendChild(i); };
-        onValue(ref(db, 'users'), s => { const us = s.val(); if(!us) return; for(const [uid, info] of Object.entries(us)) { document.querySelectorAll(`.u-name-${uid}`).forEach(el => el.innerText = info.name); document.querySelectorAll(`.u-emoji-${uid}`).forEach(el => el.innerText = info.emoji); } });
-        onValue(ref(db, 'status'), s => document.getElementById('user-count').innerText = s.val() ? Object.keys(s.val()).length : 0);
         onValue(ref(db, CHAT_PATH), s => s.forEach(c => { const d = c.val(); if(d.type === 'poll' && d.votes) d.votes.forEach((v, i) => { const el = document.getElementById(`v-${c.key}-${i}`); if(el) el.innerText = v; }); }));
     </script>
 </body>
