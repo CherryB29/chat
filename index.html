@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>우리들의 실시간 화이트보드</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #f0f0f0; }
+        canvas { display: block; background: white; cursor: crosshair; }
+        .controls { position: fixed; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="clearBoard()">전체 지우기</button>
+        <span>친구를 초대해서 같이 그려보세요!</span>
+    </div>
+    <canvas id="whiteboard"></canvas>
+
+    <script>
+        const canvas = document.getElementById('whiteboard');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let drawing = false;
+
+        // 마우스로 그리기 시작
+        canvas.addEventListener('mousedown', () => drawing = true);
+        canvas.addEventListener('mouseup', () => drawing = false);
+        canvas.addEventListener('mousemove', draw);
+
+        function draw(e) {
+            if (!drawing) return;
+            
+            // 여기에 '내 화면에 그리기' + 'Firebase에 좌표 보내기' 코드가 들어갑니다.
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'black';
+
+            ctx.lineTo(e.clientX, e.clientY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX, e.clientY);
+        }
+
+        function clearBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    </script>
+</body>
+</html>
