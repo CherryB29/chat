@@ -3,78 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>슈퍼 채팅 v11 - 하이브리드 최종본</title>
+    <title>슈퍼 채팅 v13 - 통합 완성형</title>
     <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
     <style>
         :root { --main-blue: #0084ff; --bg-gray: #f0f2f5; --me-bubble: #0084ff; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        /* 기본 배경 및 PC 대응 레이아웃 */
-        body { 
-            font-family: -apple-system, sans-serif; 
-            background: #d1d8e0; /* PC 배경색 */
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            height: 100vh; 
-        }
+        body { font-family: -apple-system, sans-serif; background: #d1d8e0; margin: 0; display: flex; justify-content: center; height: 100vh; }
 
-        /* 메인 컨테이너: PC에서는 폰 모양, 모바일에서는 풀스크린 */
-        .app-container {
-            width: 100%;
-            max-width: 500px; /* PC에서 너무 넓어지지 않게 제한 */
-            background: var(--bg-gray);
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
+        /* 레이아웃 */
+        .app-container { width: 100%; max-width: 500px; background: var(--bg-gray); display: flex; flex-direction: column; height: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
         header { background: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; flex-shrink: 0; }
         #notice-bar { background: #fff9db; padding: 8px 15px; font-size: 13px; border-bottom: 1px solid #ffe066; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
 
-        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        
-        /* 말풍선 공통 */
-        .msg-unit { display: flex; flex-direction: column; max-width: 85%; position: relative; animation: fadeIn 0.2s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        
+        /* 말풍선 */
+        .msg-unit { display: flex; flex-direction: column; max-width: 85%; position: relative; }
         .is-me { align-self: flex-end; align-items: flex-end; }
         .is-other { align-self: flex-start; align-items: flex-start; }
-        
-        .bubble { padding: 10px 14px; border-radius: 18px; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); word-break: break-all; line-height: 1.4; }
+        .bubble { padding: 10px 14px; border-radius: 18px; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); word-break: break-all; line-height: 1.5; position: relative; }
         .is-me .bubble { background: var(--me-bubble); color: white; border-bottom-right-radius: 2px; }
         .is-other .bubble { background: white; color: black; border-bottom-left-radius: 2px; }
 
-        /* 삭제 버튼 */
-        .del-btn { border: none; background: none; color: #ff4d4d; font-size: 11px; cursor: pointer; padding: 2px 5px; opacity: 0.6; transition: 0.2s; }
-        .del-btn:hover { opacity: 1; text-decoration: underline; }
-
-        /* 유저 정보 실시간 반영용 */
+        /* 링크 & 버튼 */
+        .bubble a { color: inherit; text-decoration: underline; font-weight: bold; }
+        .is-other .bubble a { color: var(--main-blue); }
+        .del-btn { border: none; background: none; color: #ff4d4d; font-size: 11px; cursor: pointer; padding: 2px 5px; opacity: 0.7; }
+        
+        /* 프로필 동기화용 */
         .user-tag { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 12px; color: #555; }
         .profile-emoji-box { font-size: 18px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 1px solid #eee; }
 
-        /* 입력바 */
+        /* 입력창 */
         #input-area { background: white; padding: 12px; display: none; gap: 10px; border-top: 1px solid #ddd; align-items: center; }
         #msg-input { flex: 1; padding: 12px 18px; border: 1px solid #eee; background: #f8f9fa; border-radius: 25px; outline: none; font-size: 16px; }
-        #send-btn { background: var(--main-blue); color: white; border: none; padding: 10px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        #send-btn:active { transform: scale(0.95); }
+        #send-btn { background: var(--main-blue); color: white; border: none; padding: 10px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; }
 
-        /* 모달 스타일 개선 */
+        /* 유튜브 & 투표 카드 */
+        .yt-preview { margin-top: 8px; border-radius: 12px; overflow: hidden; border: 1px solid #ddd; cursor: pointer; background: white; width: 100%; max-width: 260px; }
+        .yt-preview img { width: 100%; display: block; }
+        .poll-card { background: white; border: 1px solid #ddd; border-radius: 12px; padding: 12px; width: 220px; color: #333; }
+        .poll-option { background: #f1f3f5; margin-top: 8px; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; }
+
+        /* 모달 & 로그인 */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 15px; }
-        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 380px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-
+        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; }
         #auth-area { position: fixed; inset: 0; background: #f0f2f5; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .auth-card { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; }
-
-        /* 유튜브 미리보기 */
-        .yt-preview { margin-top: 8px; border-radius: 12px; overflow: hidden; border: 1px solid #ddd; cursor: pointer; transition: 0.2s; }
-        .yt-preview:hover { filter: brightness(0.9); }
-        .yt-preview img { width: 100%; display: block; }
-
-        /* 이모지 피커 크기 조절 */
         #emoji-picker-container em-emoji-picker { width: 100% !important; height: 350px !important; }
     </style>
 </head>
@@ -82,68 +56,33 @@
 
     <div class="app-container">
         <header>
-            <div style="font-size:12px; color:#666;">🟢 <span id="user-count">0</span>명</div>
+            <div style="font-size:12px;">👥 <span id="user-count">0</span>명</div>
             <div onclick="openProfileEdit()" style="cursor:pointer; background:#f0f2f5; padding:6px 14px; border-radius:20px; display:flex; align-items:center; gap:6px;">
                 <span id="header-emoji">👤</span> <b id="header-name" style="font-size:14px;">설정</b>
             </div>
         </header>
 
         <div id="notice-bar">
-            <span id="notice-text" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:10px;">📢 공지를 불러오는 중...</span>
-            <button onclick="openNoticeModal()" style="font-size:10px; border:1px solid #ffa500; color:#ffa500; background:none; border-radius:4px; padding:2px 6px; cursor:pointer; flex-shrink:0;">관리</button>
+            <span id="notice-text">📢 공지사항을 확인하세요!</span>
+            <button onclick="openNoticeModal()" style="font-size:10px; border:1px solid orange; color:orange; background:none; border-radius:4px; padding:2px 5px; cursor:pointer;">관리</button>
         </div>
 
         <div id="chat-window"></div>
 
         <div id="input-area">
             <button onclick="document.getElementById('poll-modal').style.display='flex'" style="background:none; border:none; font-size:24px; cursor:pointer;">📊</button>
-            <input type="text" id="msg-input" placeholder="메시지 또는 링크..." autocomplete="off" enterkeyhint="send">
+            <input type="text" id="msg-input" placeholder="메시지 또는 링크..." autocomplete="off">
             <button id="send-btn">전송</button>
         </div>
     </div>
 
-    <div id="auth-area">
-        <div class="auth-card">
-            <h2 style="margin-top:0;">슈퍼 채팅</h2>
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                <input type="email" id="email" style="padding:14px; border-radius:10px; border:1px solid #ddd;" placeholder="이메일">
-                <input type="password" id="password" style="padding:14px; border-radius:10px; border:1px solid #ddd;" placeholder="비밀번호(6자 이상)">
-                <button onclick="emailLogin()" style="background:#34a853; color:white; padding:14px; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">이메일 로그인/가입</button>
-                <div style="color:#aaa; font-size:13px; margin:5px 0;">간편 로그인</div>
-                <button id="google-login" style="background:#4285F4; color:white; padding:14px; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">Google 로그인</button>
-            </div>
-        </div>
-    </div>
+    <div id="auth-area"><div class="auth-card"><h2>슈퍼 채팅</h2><input type="email" id="email" style="padding:12px; width:100%; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;" placeholder="이메일"><input type="password" id="password" style="padding:12px; width:100%; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;" placeholder="비밀번호"><button onclick="emailLogin()" style="width:100%; padding:12px; background:#34a853; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">이메일 로그인</button><button id="google-login" style="width:100%; padding:12px; background:#4285F4; color:white; border:none; border-radius:8px; margin-top:10px; font-weight:bold; cursor:pointer;">Google 로그인</button></div></div>
+    
+    <div id="profile-modal" class="modal"><div class="modal-content"><h3>내 프로필 설정</h3><div id="emoji-picker-container"></div><input type="text" id="setup-name" style="padding:12px; border:1px solid #ddd; border-radius:8px;" placeholder="닉네임"><button onclick="saveProfile()" style="background:var(--main-blue); color:white; padding:12px; border:none; border-radius:8px; font-weight:bold;">저장 및 전체 적용</button><button onclick="closeModal('profile-modal')" style="background:#eee; padding:10px; border:none; border-radius:8px;">닫기</button></div></div>
 
-    <div id="profile-modal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin:0">내 프로필 설정</h3>
-            <div id="emoji-picker-container"></div>
-            <input type="text" id="setup-name" style="padding:12px; border:1px solid #ddd; border-radius:10px;" placeholder="닉네임 입력">
-            <button onclick="saveProfile()" style="background:var(--main-blue); color:white; padding:14px; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">저장 및 적용</button>
-            <button onclick="closeModal('profile-modal')" style="background:#f1f3f5; padding:10px; border:none; border-radius:10px; cursor:pointer;">닫기</button>
-        </div>
-    </div>
+    <div id="poll-modal" class="modal"><div class="modal-content"><h3>📊 투표 만들기</h3><input type="text" id="poll-q" placeholder="질문" style="padding:10px;"><input type="text" id="poll-o1" placeholder="옵션 1" style="padding:10px;"><input type="text" id="poll-o2" placeholder="옵션 2" style="padding:10px;"><button onclick="createPoll()" style="background:var(--main-blue); color:white; padding:12px; border:none; border-radius:8px;">생성하기</button><button onclick="closeModal('poll-modal')" style="background:#eee; padding:10px; border:none; border-radius:8px;">취소</button></div></div>
 
-    <div id="poll-modal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin:0">📊 실시간 투표 만들기</h3>
-            <input type="text" id="poll-q" placeholder="무엇을 결정할까요?" style="padding:12px; border:1px solid #ddd; border-radius:10px;">
-            <input type="text" id="poll-o1" placeholder="선택지 1" style="padding:12px; border:1px solid #ddd; border-radius:10px;">
-            <input type="text" id="poll-o2" placeholder="선택지 2" style="padding:12px; border:1px solid #ddd; border-radius:10px;">
-            <button onclick="createPoll()" style="background:var(--main-blue); color:white; padding:14px; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">투표 올리기</button>
-            <button onclick="closeModal('poll-modal')" style="background:#f1f3f5; padding:10px; border:none; border-radius:10px;">취소</button>
-        </div>
-    </div>
-
-    <div id="notice-modal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin:0">📢 공지사항 관리</h3>
-            <textarea id="new-notice" style="padding:12px; border:1px solid #ddd; border-radius:10px; height:100px; resize:none;" placeholder="공지할 내용을 입력하세요"></textarea>
-            <button onclick="saveNotice()" style="background:#ffa500; color:white; padding:14px; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">즉시 반영</button>
-            <button onclick="closeModal('notice-modal')" style="background:#f1f3f5; padding:10px; border:none; border-radius:10px;">닫기</button>
-        </div>
-    </div>
+    <div id="notice-modal" class="modal"><div class="modal-content"><h3>📢 공지 수정</h3><textarea id="new-notice" style="height:80px; padding:10px; border:1px solid #ddd;"></textarea><button onclick="saveNotice()" style="background:orange; color:white; padding:12px; border:none; border-radius:8px;">반영하기</button><button onclick="closeModal('notice-modal')" style="background:#eee; padding:10px; border:none; border-radius:8px;">닫기</button></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -164,8 +103,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-        const CHAT_PATH = 'chat_v11';
-        
+        const CHAT_PATH = 'chat_v13';
         let myInfo = { name: "", emoji: "👤", uid: "" };
 
         // 1. 인증 로직
@@ -173,132 +111,97 @@
         window.emailLogin = async () => {
             const email = document.getElementById('email').value;
             const pw = document.getElementById('password').value;
-            if(!email || pw.length < 6) return alert("비밀번호 6자 이상!");
+            if(!email || pw.length < 6) return alert("이메일 및 비밀번호(6자 이상)를 확인하세요.");
             try { await signInWithEmailAndPassword(auth, email, pw); } 
-            catch { try { await createUserWithEmailAndPassword(auth, email, pw); } catch(e) { alert("로그인/가입 실패: " + e.message); } }
+            catch { try { await createUserWithEmailAndPassword(auth, email, pw); } catch(e) { alert(e.message); } }
         };
 
         getRedirectResult(auth).catch(e => console.error(e));
-
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 myInfo.uid = user.uid;
                 myInfo.name = user.displayName || user.email.split('@')[0];
                 document.getElementById('auth-area').style.display = 'none';
                 document.getElementById('input-area').style.display = 'flex';
-
-                const statusRef = ref(db, `status/${user.uid}`);
-                set(statusRef, { online: true });
-                onDisconnect(statusRef).remove();
-
                 onValue(ref(db, `users/${user.uid}`), (snap) => {
                     const data = snap.val();
-                    if(data) {
-                        myInfo.name = data.name; myInfo.emoji = data.emoji;
-                        document.getElementById('header-name').innerText = myInfo.name;
-                        document.getElementById('header-emoji').innerText = myInfo.emoji;
-                        document.getElementById('setup-name').value = myInfo.name;
-                    } else {
-                        update(ref(db, `users/${user.uid}`), { name: myInfo.name, emoji: myInfo.emoji });
-                    }
+                    if(data) { myInfo.name = data.name; myInfo.emoji = data.emoji; document.getElementById('header-name').innerText = myInfo.name; document.getElementById('header-emoji').innerText = myInfo.emoji; document.getElementById('setup-name').value = myInfo.name; }
+                    else { update(ref(db, `users/${user.uid}`), { name: myInfo.name, emoji: myInfo.emoji }); }
                 }, { onlyOnce: true });
+                set(ref(db, `status/${user.uid}`), { online: true });
+                onDisconnect(ref(db, `status/${user.uid}`)).remove();
             }
         });
 
-        // 2. 실시간 프로필 연동 (과거 채팅 포함)
-        onValue(ref(db, 'users'), (snapshot) => {
-            const users = snapshot.val();
-            if(!users) return;
-            for (const [uid, info] of Object.entries(users)) {
+        // 2. 텍스트 처리 함수 (하이퍼링크)
+        function linkify(text) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+        }
+
+        // 3. 유튜브 ID 추출 함수
+        function getYTID(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        // 4. 실시간 프로필 연동
+        onValue(ref(db, 'users'), (snap) => {
+            const users = snap.val(); if(!users) return;
+            for(const [uid, info] of Object.entries(users)) {
                 document.querySelectorAll(`.u-name-${uid}`).forEach(el => el.innerText = info.name);
                 document.querySelectorAll(`.u-emoji-${uid}`).forEach(el => el.innerText = info.emoji);
             }
         });
 
-        // 3. 메시지 삭제
-        window.deleteMsg = (key) => { if(confirm("삭제할까요?")) remove(ref(db, `${CHAT_PATH}/${key}`)); };
-        onChildRemoved(ref(db, CHAT_PATH), (snap) => { document.getElementById(`msg-${snap.key}`)?.remove(); });
-
-        // 4. 이모지 피커
-        const picker = new EmojiMart.Picker({ 
-            onEmojiSelect: (e) => { myInfo.emoji = e.native; document.getElementById('header-emoji').innerText = e.native; },
-            locale: 'ko', theme: 'light'
-        });
+        // 5. 기타 UI 기능
+        const picker = new EmojiMart.Picker({ onEmojiSelect: (e) => { myInfo.emoji = e.native; document.getElementById('header-emoji').innerText = e.native; }, locale:'ko' });
         document.getElementById('emoji-picker-container').appendChild(picker);
-
-        // 5. 기능 함수들
         window.closeModal = (id) => document.getElementById(id).style.display = 'none';
         window.openProfileEdit = () => document.getElementById('profile-modal').style.display = 'flex';
         window.openNoticeModal = () => document.getElementById('notice-modal').style.display = 'flex';
-        
-        window.saveProfile = () => {
-            const name = document.getElementById('setup-name').value.trim();
-            if(!name) return;
-            myInfo.name = name;
-            update(ref(db, `users/${myInfo.uid}`), { name: name, emoji: myInfo.emoji });
-            closeModal('profile-modal');
-        };
-
+        window.saveProfile = () => { const n = document.getElementById('setup-name').value; if(n) update(ref(db, `users/${myInfo.uid}`), { name: n, emoji: myInfo.emoji }); closeModal('profile-modal'); };
         window.saveNotice = () => { set(ref(db, 'notice'), document.getElementById('new-notice').value); closeModal('notice-modal'); };
         onValue(ref(db, 'notice'), s => document.getElementById('notice-text').innerText = s.val() || "공지사항이 없습니다.");
         onValue(ref(db, 'status'), s => document.getElementById('user-count').innerText = s.size || 0);
 
-        window.createPoll = () => {
-            const q = document.getElementById('poll-q').value;
-            if(!q) return alert("질문을 입력하세요");
-            push(ref(db, CHAT_PATH), { type:'poll', q, o1: document.getElementById('poll-o1').value, o2: document.getElementById('poll-o2').value, v1:0, v2:0, uid: myInfo.uid });
-            closeModal('poll-modal');
-        };
+        // 6. 투표 및 삭제
+        window.createPoll = () => { push(ref(db, CHAT_PATH), { type:'poll', q: document.getElementById('poll-q').value, o1: document.getElementById('poll-o1').value, o2: document.getElementById('poll-o2').value, v1:0, v2:0, uid: myInfo.uid }); closeModal('poll-modal'); };
         window.vote = (key, n) => runTransaction(ref(db, `${CHAT_PATH}/${key}/v${n}`), v => (v || 0) + 1);
+        window.deleteMsg = (key) => { if(confirm("삭제하시겠습니까?")) remove(ref(db, `${CHAT_PATH}/${key}`)); };
+        onChildRemoved(ref(db, CHAT_PATH), s => document.getElementById(`msg-${s.key}`)?.remove());
 
-        // 6. 메시지 전송 및 유튜브
-        const getYTID = (url) => {
-            const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
-            return (match && match[2].length === 11) ? match[2] : null;
-        }
-
+        // 7. 메시지 전송 및 렌더링
         const sendMsg = () => {
             const text = document.getElementById('msg-input').value.trim();
-            if (!text) return;
+            if(!text) return;
             push(ref(db, CHAT_PATH), { text, uid: myInfo.uid, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
             document.getElementById('msg-input').value = "";
         };
         document.getElementById('send-btn').onclick = sendMsg;
         document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') sendMsg(); };
 
-        // 7. 실시간 메시지 렌더링
         onChildAdded(ref(db, CHAT_PATH), (snap) => {
-            const data = snap.val();
-            const key = snap.key;
-            const isMe = data.uid === myInfo.uid;
-            const div = document.createElement('div');
-            div.id = `msg-${key}`;
-            div.className = `msg-unit ${isMe ? 'is-me' : 'is-other'}`;
-
-            const nCls = `u-name-${data.uid}`;
-            const eCls = `u-emoji-${data.uid}`;
+            const data = snap.val(); const key = snap.key; const isMe = data.uid === myInfo.uid;
+            const div = document.createElement('div'); div.id = `msg-${key}`; div.className = `msg-unit ${isMe ? 'is-me' : 'is-other'}`;
             const delBtn = isMe ? `<button class="del-btn" onclick="deleteMsg('${key}')">삭제</button>` : '';
 
             if(data.type === 'poll') {
-                div.innerHTML = `
-                    <div class="user-tag">📊 <span class="${nCls}">...</span></div>
-                    <div class="poll-card"><strong>${data.q}</strong>
-                        <div class="poll-option" onclick="vote('${key}',1)">${data.o1} <b id="v1-${key}">${data.v1}</b></div>
-                        <div class="poll-option" onclick="vote('${key}',2)">${data.o2} <b id="v2-${key}">${data.v2}</b></div>
-                    </div>${delBtn}`;
+                div.innerHTML = `<div class="user-tag">📊 <span class="u-name-${data.uid}">...</span></div><div class="poll-card"><strong>${data.q}</strong><div class="poll-option" onclick="vote('${key}',1)">${data.o1} <b id="v1-${key}">${data.v1}</b></div><div class="poll-option" onclick="vote('${key}',2)">${data.o2} <b id="v2-${key}">${data.v2}</b></div></div>${delBtn}`;
             } else {
+                // 유튜브 ID 찾기
                 const ytId = getYTID(data.text || "");
-                let ytHtml = ytId ? `<div class="yt-preview" onclick="window.open('https://youtu.be/${ytId}')"><img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg"></div>` : "";
+                const ytHtml = ytId ? `<div class="yt-preview" onclick="window.open('https://youtu.be/${ytId}')"><img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg"><div style="padding:8px; font-size:12px; color:#333;">▶ 유튜브 영상 보기</div></div>` : "";
+                
                 div.innerHTML = `
-                    <div class="user-tag">${!isMe ? `<div class="profile-emoji-box ${eCls}"></div>` : ''} <span class="${nCls}" style="font-weight:bold;">...</span></div>
-                    <div class="bubble">${data.text}</div>${ytHtml}
-                    <div style="display:flex; gap:5px; align-items:center; margin-top:2px;">
-                        <span style="font-size:10px; color:#999;">${data.time}</span>${delBtn}
-                    </div>`;
+                    <div class="user-tag">${!isMe ? `<div class="profile-emoji-box u-emoji-${data.uid}"></div>` : ''} <span class="u-name-${data.uid}" style="font-weight:bold;">...</span></div>
+                    <div class="bubble">${linkify(data.text)}</div>
+                    ${ytHtml}
+                    <div style="display:flex; gap:5px; align-items:center; margin-top:2px;"><span style="font-size:10px; color:#999;">${data.time}</span>${delBtn}</div>`;
             }
             document.getElementById('chat-window').appendChild(div);
             document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
-
             if(data.type === 'poll') {
                 onValue(ref(db, `${CHAT_PATH}/${key}/v1`), s => { if(document.getElementById(`v1-${key}`)) document.getElementById(`v1-${key}`).innerText = s.val()||0 });
                 onValue(ref(db, `${CHAT_PATH}/${key}/v2`), s => { if(document.getElementById(`v2-${key}`)) document.getElementById(`v2-${key}`).innerText = s.val()||0 });
