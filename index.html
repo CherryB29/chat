@@ -3,51 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>우리들의 비밀 채팅방</title>
+    <title>이메일 & 구글 채팅방</title>
     <style>
-        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        #auth-area { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: white; position: fixed; width: 100%; z-index: 100; gap: 15px; }
+        .auth-box { display: flex; flex-direction: column; gap: 10px; width: 300px; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 5px; outline: none; }
+        button { padding: 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
+        .google-btn { background: #4285F4; color: white; }
+        .email-btn { background: #34a853; color: white; }
+        
+        /* 채팅창 스타일 */
         #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        
-        /* 메시지 스타일 */
-        .message { 
-            background: white; padding: 10px 15px; border-radius: 15px; 
-            max-width: 80%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
-            word-break: break-all; line-height: 1.4; font-size: 15px;
-        }
-        
-        /* 하단 입력창 */
-        #input-area { background: white; padding: 15px; display: flex; gap: 10px; border-top: 1px solid #ddd; }
-        input { 
-            flex: 1; padding: 12px 18px; border: 1px solid #ddd; 
-            border-radius: 25px; outline: none; font-size: 15px;
-        }
-        input:focus { border-color: #0084ff; }
-        button { 
-            background: #0084ff; color: white; border: none; 
-            padding: 0 20px; border-radius: 25px; cursor: pointer; 
-            font-weight: bold; transition: 0.2s;
-        }
-        button:hover { background: #0073e6; }
+        .message { background: white; padding: 10px; border-radius: 10px; max-width: 70%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .my-message { align-self: flex-end; background: #0084ff; color: white; }
+        .msg-name { font-size: 10px; opacity: 0.8; margin-bottom: 3px; }
+        #input-area { background: white; padding: 15px; display: none; gap: 10px; border-top: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
-    <div id="chat-window">
-        <div class="message" style="background: #e1f5fe; color: #01579b; align-self: center;">
-            채팅방에 연결되었습니다! 대화를 시작해보세요.
+    <div id="auth-area">
+        <h2>채팅 로그인</h2>
+        <div class="auth-box">
+            <input type="email" id="email" placeholder="이메일">
+            <input type="password" id="password" placeholder="비밀번호">
+            <button class="email-btn" onclick="emailLogin()">이메일 로그인 / 가입</button>
         </div>
+        <p>또는</p>
+        <button class="google-btn" id="google-login" style="width: 300px;">Google로 시작하기</button>
     </div>
 
+    <div id="chat-window"></div>
     <div id="input-area">
-        <input type="text" id="msg-input" placeholder="메시지를 입력하세요..." autocomplete="off">
-        <button id="send-btn">전송</button>
+        <input type="text" id="msg-input" placeholder="메시지 입력..." style="flex:1; border-radius: 20px;">
+        <button id="send-btn" style="background: #0084ff; color: white; border-radius: 20px;">전송</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // 요청하신 Firebase 설정값 적용
         const firebaseConfig = {
             apiKey: "AIzaSyDVZVHumJQptb3P_sQT1yMAuVRhANI6Dj4",
             authDomain: "whiteboard-5e13d.firebaseapp.com",
@@ -59,51 +56,60 @@
             measurementId: "G-QS22EDDL9V"
         };
 
-        // Firebase 초기화
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const chatRef = ref(db, 'chat_messages'); // 채팅 데이터를 저장할 경로
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
 
-        const chatWindow = document.getElementById('chat-window');
-        const msgInput = document.getElementById('msg-input');
-        const sendBtn = document.getElementById('send-btn');
+        let currentUser = null;
 
-        // 메시지 전송 로직
-        function sendMsg() {
-            const text = msgInput.value.trim();
-            if (text === "") return;
+        // 1. 구글 로그인
+        document.getElementById('google-login').onclick = () => signInWithPopup(auth, provider);
 
-            // Firebase DB에 메시지 추가
-            push(chatRef, {
+        // 2. 이메일 로그인/가입 (가입 기록 없으면 가입, 있으면 로그인)
+        window.emailLogin = async () => {
+            const email = document.getElementById('email').value;
+            const pw = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pw);
+            } catch (err) {
+                if (err.code === 'auth/user-not-found') {
+                    await createUserWithEmailAndPassword(auth, email, pw);
+                } else { alert("로그인 실패: " + err.message); }
+            }
+        };
+
+        // 인증 상태 확인
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-area').style.display = 'none';
+                document.getElementById('input-area').style.display = 'flex';
+            }
+        });
+
+        // 메시지 전송
+        document.getElementById('send-btn').onclick = () => {
+            const text = document.getElementById('msg-input').value;
+            if (!text) return;
+            push(ref(db, 'chat_v3'), {
                 text: text,
-                time: new Date().toLocaleTimeString()
+                userName: currentUser.displayName || currentUser.email.split('@')[0],
+                userId: currentUser.uid
             });
+            document.getElementById('msg-input').value = "";
+        };
 
-            msgInput.value = "";
-            msgInput.focus();
-        }
-
-        // 버튼 클릭 및 엔터키 이벤트
-        sendBtn.addEventListener('click', sendMsg);
-        msgInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMsg();
-        });
-
-        // 데이터베이스에 새 메시지가 들어오면 화면에 표시
-        onChildAdded(chatRef, (snapshot) => {
+        // 메시지 표시
+        onChildAdded(ref(db, 'chat_v3'), (snapshot) => {
             const data = snapshot.val();
-            displayMessage(data.text);
-        });
-
-        function displayMessage(text) {
             const msgDiv = document.createElement('div');
             msgDiv.classList.add('message');
-            msgDiv.innerText = text;
-            chatWindow.appendChild(msgDiv);
-            
-            // 새 메시지가 오면 화면을 아래로 자동 스크롤
-            chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
-        }
+            if (data.userId === currentUser?.uid) msgDiv.classList.add('my-message');
+            msgDiv.innerHTML = `<div class="msg-name">${data.userName}</div><div>${data.text}</div>`;
+            document.getElementById('chat-window').appendChild(msgDiv);
+            document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+        });
     </script>
 </body>
 </html>
