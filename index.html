@@ -3,73 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>아바타 채팅방</title>
+    <title>슈퍼 이모지 채팅 v6</title>
+    <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
     <style>
         :root { --main-blue: #0084ff; --bg-gray: #f0f2f5; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg-gray); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg-gray); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* 헤더 */
-        header { background: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
-        .user-status { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold; }
-        .my-profile-preview { display: flex; align-items: center; gap: 8px; cursor: pointer; background: #eee; padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+        header { background: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; z-index: 10; }
+        .my-profile-card { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 12px; border-radius: 20px; background: #f8f9fa; border: 1px solid #eee; }
 
-        /* 채팅 영역 */
         #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
         .msg-unit { display: flex; flex-direction: column; max-width: 80%; }
         .is-me { align-self: flex-end; align-items: flex-end; }
         .is-other { align-self: flex-start; align-items: flex-start; }
         
-        .user-tag { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; font-size: 12px; color: #555; }
-        .avatar-img { width: 30px; height: 30px; border-radius: 50%; background: white; border: 1px solid #ddd; }
+        .user-tag { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 12px; color: #555; }
+        .profile-emoji { font-size: 20px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 1px solid #ddd; }
         
-        .bubble { padding: 10px 16px; border-radius: 18px; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); line-height: 1.4; }
+        .bubble { padding: 10px 16px; border-radius: 18px; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); line-height: 1.4; word-break: break-all; }
         .is-me .bubble { background: var(--main-blue); color: white; border-bottom-right-radius: 2px; }
         .is-other .bubble { background: white; color: black; border-bottom-left-radius: 2px; }
-        .msg-time { font-size: 10px; color: #999; margin-top: 4px; }
+
+        /* 유튜브 미리보기 */
+        .yt-preview { margin-top: 8px; border-radius: 12px; overflow: hidden; background: white; border: 1px solid #ddd; cursor: pointer; max-width: 280px; }
+        .yt-preview img { width: 100%; display: block; }
+        .yt-info { padding: 8px; font-size: 12px; font-weight: bold; }
 
         /* 입력창 */
         #input-area { background: white; padding: 15px; display: none; gap: 10px; border-top: 1px solid #ddd; }
         #msg-input { flex: 1; padding: 12px 20px; border: 1px solid #ddd; border-radius: 25px; outline: none; }
         #send-btn { background: var(--main-blue); color: white; border: none; padding: 0 20px; border-radius: 25px; cursor: pointer; font-weight: bold; }
 
-        /* 프로필 설정 모달 (초기 진입 및 수정용) */
-        #profile-setup { position: fixed; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-        .avatar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
-        .avatar-choice { width: 70px; height: 70px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
-        .avatar-choice.selected { border-color: var(--main-blue); transform: scale(1.1); }
-        .setup-input { padding: 12px; width: 240px; border: 1px solid #ddd; border-radius: 8px; text-align: center; font-size: 16px; }
+        /* 인증 레이어 */
+        #auth-area { position: fixed; inset: 0; background: white; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
+        .auth-box { display: flex; flex-direction: column; gap: 10px; width: 280px; }
+
+        /* 프로필 편집 모달 */
+        #profile-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; display: none; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 350px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        #emoji-picker-container { width: 100%; height: 350px; overflow-y: auto; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="user-status">🟢 접속 <span id="user-count">0</span>명</div>
-        <div class="my-profile-preview" onclick="location.reload()">
-            <img id="header-avatar" src="" style="width:24px; height:24px; border-radius:50%; display:none;">
-            <span id="header-name">로그인 필요</span>
+        <div style="font-size:13px;">👥 <span id="user-count">0</span>명 접속중</div>
+        <div class="my-profile-card" onclick="openProfileEdit()">
+            <span id="header-emoji" style="font-size: 20px;">👤</span>
+            <b id="header-name">닉네임 설정</b>
         </div>
     </header>
 
-    <div id="profile-setup">
-        <h2 style="margin:0;">캐릭터 만들기</h2>
-        <p style="color:#666; font-size:14px; margin:0;">채팅방에서 사용할 모습과 이름을 골라주세요.</p>
-        <div class="avatar-grid" id="avatar-grid"></div>
-        <input type="text" id="setup-name" class="setup-input" placeholder="닉네임 입력 (최대 8자)" maxlength="8">
-        <button id="start-btn" style="background: var(--main-blue); color:white; padding:15px 60px; border:none; border-radius:30px; font-size:16px; font-weight:bold; cursor:pointer;">채팅 시작하기</button>
-        <button id="google-login-btn" style="background:#4285F4; color:white; padding:10px 20px; border:none; border-radius:5px; margin-top:10px; cursor:pointer;">또는 구글로 로그인</button>
+    <div id="auth-area">
+        <h2>채팅방 입장</h2>
+        <div class="auth-box">
+            <input type="email" id="email" style="padding:12px; border-radius:8px; border:1px solid #ddd;" placeholder="이메일">
+            <input type="password" id="password" style="padding:12px; border-radius:8px; border:1px solid #ddd;" placeholder="비밀번호(6자 이상)">
+            <button style="background: #34a853; color: white; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="emailLogin()">이메일로 로그인/가입</button>
+        </div>
+        <button style="background: #4285F4; color: white; width: 280px; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;" id="google-login">Google로 계속하기</button>
+    </div>
+
+    <div id="profile-modal">
+        <div class="modal-content">
+            <h3>프로필 편집</h3>
+            <div style="font-size: 40px; margin-bottom: 10px;" id="selected-emoji-display">👤</div>
+            <div id="emoji-picker-container"></div>
+            <input type="text" id="setup-name" style="padding:12px; width: 80%; border-radius:8px; border:1px solid #ddd;" placeholder="닉네임 입력" maxlength="10">
+            <button onclick="saveProfile()" style="background: var(--main-blue); color:white; width: 85%; padding:12px; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">저장 완료</button>
+        </div>
     </div>
 
     <div id="chat-window"></div>
 
     <div id="input-area">
-        <input type="text" id="msg-input" placeholder="메시지를 입력하세요...">
+        <input type="text" id="msg-input" placeholder="메시지 또는 유튜브 링크...">
         <button id="send-btn">전송</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, onValue, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, push, onChildAdded, onValue, set, onDisconnect, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDVZVHumJQptb3P_sQT1yMAuVRhANI6Dj4",
@@ -86,67 +101,71 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        let myInfo = { name: "", avatar: "" };
-        const seeds = ["Buddy", "Daisy", "Bubba", "Cookie", "Bear", "Lucky"];
-        const grid = document.getElementById('avatar-grid');
+        let myInfo = { name: "", emoji: "👤", uid: "" };
 
-        // 아바타 선택지 생성
-        seeds.forEach(seed => {
-            const url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
-            const img = document.createElement('img');
-            img.src = url;
-            img.className = 'avatar-choice';
-            img.onclick = () => {
-                document.querySelectorAll('.avatar-choice').forEach(el => el.classList.remove('selected'));
-                img.classList.add('selected');
-                myInfo.avatar = url;
-            };
-            grid.appendChild(img);
-        });
+        // 이모지 피커 설정
+        const pickerOptions = { 
+            onEmojiSelect: (emoji) => {
+                myInfo.emoji = emoji.native;
+                document.getElementById('selected-emoji-display').innerText = emoji.native;
+            },
+            locale: 'ko'
+        };
+        const picker = new EmojiMart.Picker(pickerOptions);
+        document.getElementById('emoji-picker-container').appendChild(picker);
 
-        // 시작 버튼 클릭
-        document.getElementById('start-btn').onclick = () => {
+        // 프로필 편집 함수
+        window.openProfileEdit = () => document.getElementById('profile-modal').style.display = 'flex';
+        window.saveProfile = () => {
             const name = document.getElementById('setup-name').value.trim();
-            if(!name || !myInfo.avatar) return alert("닉네임과 캐릭터를 모두 선택해주세요!");
+            if(!name) return alert("닉네임을 입력하세요!");
             myInfo.name = name;
-            enterChat();
+            document.getElementById('header-name').innerText = myInfo.name;
+            document.getElementById('header-emoji').innerText = myInfo.emoji;
+            document.getElementById('profile-modal').style.display = 'none';
+            // DB 업데이트
+            update(ref(db, `status/${myInfo.uid}`), { name: myInfo.name, emoji: myInfo.emoji });
         };
 
-        // 구글 로그인
-        document.getElementById('google-login-btn').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+        // 로그인 로직 (이메일 & 구글 유지)
+        document.getElementById('google-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+        window.emailLogin = async () => {
+            const email = document.getElementById('email').value;
+            const pw = document.getElementById('password').value;
+            try { await signInWithEmailAndPassword(auth, email, pw); } 
+            catch { await createUserWithEmailAndPassword(auth, email, pw); }
+        };
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                myInfo.name = user.displayName;
-                myInfo.avatar = user.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.uid}`;
-                enterChat();
+                myInfo.uid = user.uid;
+                myInfo.name = user.displayName || user.email.split('@')[0];
+                document.getElementById('auth-area').style.display = 'none';
+                document.getElementById('input-area').style.display = 'flex';
+                document.getElementById('header-name').innerText = myInfo.name;
+                document.getElementById('setup-name').value = myInfo.name;
+
+                const statusRef = ref(db, `status/${user.uid}`);
+                set(statusRef, { name: myInfo.name, emoji: myInfo.emoji });
+                onDisconnect(statusRef).remove();
             }
         });
 
-        function enterChat() {
-            document.getElementById('profile-setup').style.display = 'none';
-            document.getElementById('input-area').style.display = 'flex';
-            document.getElementById('header-avatar').src = myInfo.avatar;
-            document.getElementById('header-avatar').style.display = 'block';
-            document.getElementById('header-name').innerText = myInfo.name;
-
-            // 접속 상태 기록
-            const myStatusRef = ref(db, `status/${Date.now()}`);
-            set(myStatusRef, { name: myInfo.name });
-            onDisconnect(myStatusRef).remove();
-        }
-
-        // 접속자 수 업데이트
         onValue(ref(db, 'status'), (snap) => document.getElementById('user-count').innerText = snap.size || 0);
 
-        // 메시지 전송
+        // 유튜브 미리보기
+        function getYTID(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
         const sendMsg = () => {
             const text = document.getElementById('msg-input').value.trim();
             if (!text) return;
-            push(ref(db, 'chat_v_avatar'), {
-                text, sender: myInfo.name, avatar: myInfo.avatar,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                timestamp: Date.now()
+            push(ref(db, 'chat_v_final'), {
+                text, sender: myInfo.name, emoji: myInfo.emoji, uid: myInfo.uid,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             });
             document.getElementById('msg-input').value = "";
         };
@@ -154,24 +173,31 @@
         document.getElementById('send-btn').onclick = sendMsg;
         document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') sendMsg(); };
 
-        // 메시지 수신
-        onChildAdded(ref(db, 'chat_v_avatar'), (snapshot) => {
+        onChildAdded(ref(db, 'chat_v_final'), (snapshot) => {
             const data = snapshot.val();
-            const isMe = data.sender === myInfo.name;
-            
+            const isMe = data.uid === myInfo.uid;
+            const ytId = getYTID(data.text);
             const msgDiv = document.createElement('div');
             msgDiv.className = `msg-unit ${isMe ? 'is-me' : 'is-other'}`;
+            
+            let ytHtml = ytId ? `
+                <div class="yt-preview" onclick="window.open('https://youtu.be/${ytId}')">
+                    <img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg">
+                    <div class="yt-info">▶ 유튜브 영상 확인</div>
+                </div>` : "";
+
             msgDiv.innerHTML = `
                 <div class="user-tag">
-                    ${!isMe ? `<img src="${data.avatar}" class="avatar-img">` : ''}
+                    ${!isMe ? `<div class="profile-emoji">${data.emoji}</div>` : ''}
                     <b>${data.sender}</b>
                 </div>
                 <div class="bubble">${data.text}</div>
-                <div class="msg-time">${data.time}</div>
+                ${ytHtml}
+                <div style="font-size:10px; color:#999; margin-top:4px;">${data.time}</div>
             `;
             document.getElementById('chat-window').appendChild(msgDiv);
             document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
         });
     </script>
 </body>
-</html>
+</html
